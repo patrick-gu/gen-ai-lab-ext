@@ -81,7 +81,7 @@ async function init() {
     // get the user's credentials from environment variables
     const creds = await fetchCredentials();
     // instantiate the BedrockRuntimeClient
-    client = await createBedrockClient(creds);
+    client = createBedrockClient(creds);
     // Once everything is setup, let's get the first affirmation
     await generateLlama();
   } catch (err) {
@@ -98,7 +98,7 @@ async function init() {
 }
 
 let client = null;
-async function createBedrockClient(creds) {
+function createBedrockClient(creds) {
   client = new BedrockRuntimeClient({
     credentials: creds.credentials,
     region: creds.region,
