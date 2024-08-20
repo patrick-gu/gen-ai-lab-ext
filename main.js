@@ -5,8 +5,8 @@ import {
 } from "@aws-sdk/client-bedrock-runtime";
 
 // using these models since anthropic requires us to fork over some info and the results are basically the same
-const llama3Id = "meta.llama3-1-8b-instruct-v1:0";
-const mistralId = "mistral.mistral-7b-instruct-v0:2";
+const llama3Id = "meta.llama3-1-8b-instruct-v1:";
+const mistralId = "mistral.mistral-7b-instruct-v0:";
 
 const prompt =
   "Give me an affirmation to boost my motivation today, referencing plants, animals, or flowers by adding emoji. Don't show the prompt, only the quote. Do not add anything like Here is an affirmation... just return the affirmation alone";
@@ -31,7 +31,8 @@ async function fetchNewAffirmation(modelId) {
   } catch (err) {
     console.error(err);
     document.querySelector("#affirmation").innerHTML = err;
-    throw Error; // propogate error up, I know this is kinda stupid but I'm also way too lazy to do this properly
+    disableButton(false);
+    throw err; // propogate error up, I know this is kinda stupid but I'm also way too lazy to do this properly
   }
 
   disableButton(false);
