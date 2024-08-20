@@ -4,7 +4,7 @@ import {
   ConverseCommand,
 } from "@aws-sdk/client-bedrock-runtime";
 
-const llama3Id = "meta.llama3-8b-instruct-v1:0";
+const llama3Id = "meta.llama3-1-8b-instruct-v1:0";
 const mistralId = "mistral.mistral-7b-instruct-v0:2";
 const prompt =
   "Give me an affirmation to boost my motivation today, referencing plants, animals, or flowers by adding emoji. Don't show the prompt, only the quote. Do not add anything like Here is an affirmation... just return the affirmation alone";
@@ -66,7 +66,7 @@ async function init() {
     // instantiate the BedrockRuntimeClient
     client = await createBedrockClient(creds);
     // Once everything is setup, let's get the first affirmation
-    await generateClaude3();
+    await generateLlama();
   } catch (err) {
     console.error(err);
     document.querySelector("#affirmation").innerHTML = err;
@@ -95,7 +95,6 @@ async function fetchCredentials() {
     credentials: {
       accessKeyId: import.meta.env.VITE_AWS_ACCESS_KEY_ID,
       secretAccessKey: import.meta.env.VITE_AWS_SECRET_ACCESS_KEY,
-      sessionToken: import.meta.env.VITE_AWS_SESSION_TOKEN,
     },
   };
 }
