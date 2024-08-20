@@ -1,9 +1,13 @@
-import './style.css'
-import { BedrockRuntimeClient, ConverseCommand } from "@aws-sdk/client-bedrock-runtime";
+import "./style.css";
+import {
+  BedrockRuntimeClient,
+  ConverseCommand,
+} from "@aws-sdk/client-bedrock-runtime";
 
-const claude3Id =  'anthropic.claude-3-haiku-20240307-v1:0';
-const claudeV2Id = 'anthropic.claude-v2';
-const prompt = "Give me an affirmation to boost my motivation today, referencing plants, animals, or flowers by adding emoji. Don't show the prompt, only the quote. Do not add anything like Here is an affirmation... just return the affirmation alone";
+const llama3Id = "meta.llama3-8b-instruct-v1:0";
+const mistralId = "mistral.mistral-7b-instruct-v0:2";
+const prompt =
+  "Give me an affirmation to boost my motivation today, referencing plants, animals, or flowers by adding emoji. Don't show the prompt, only the quote. Do not add anything like Here is an affirmation... just return the affirmation alone";
 const conversation = [
   {
     role: "user",
@@ -16,7 +20,9 @@ async function fetchNewAffirmation(modelId) {
   showLoadingAnimation();
 
   try {
-    const response = await client.send(new ConverseCommand({ modelId, messages: conversation }));
+    const response = await client.send(
+      new ConverseCommand({ modelId, messages: conversation }),
+    );
     const affirmation = response.output.message.content[0].text;
     // set the affirmation in HTML
     document.querySelector("#affirmation").innerHTML = affirmation;
@@ -28,25 +34,26 @@ async function fetchNewAffirmation(modelId) {
   disableButton(false);
 }
 
-async function generateClaude3() {
-  await fetchNewAffirmation(claude3Id);
+async function generateLlama() {
+  await fetchNewAffirmation(llama3Id);
 }
 
-async function generateClaudeV2() {
-  await fetchNewAffirmation(claudeV2Id);
+async function generateMistral() {
+  await fetchNewAffirmation(mistralId);
 }
 
 // Shows a loading animation while fetching a new affirmation
 function showLoadingAnimation() {
-  document.querySelector("#affirmation").innerHTML = '<div class="loading-spinner"></div>';
+  document.querySelector("#affirmation").innerHTML =
+    '<div class="loading-spinner"></div>';
 }
 
 // Disables the button while fetching a new affirmation so we don't request several at once by clicking repeatedly
 function disableButton(isDisabled) {
-  const affirmationButton = document.querySelector("#getNewAffirmation");
-  const affirmationButton2 = document.querySelector('#getNewAffirmation2');
-  affirmationButton.disabled = isDisabled;
-  affirmationButton2.disabled = isDisabled;
+  const llamaButton = document.querySelector("#getNewAffirmationLlama");
+  const mistralButton = document.querySelector("#getNewAffirmationMistral");
+  llamaButton.disabled = isDisabled;
+  mistralButton.disabled = isDisabled;
 }
 
 init();
@@ -56,34 +63,35 @@ async function init() {
   try {
     // get the user's credentials from environment variables
     const creds = await fetchCredentials();
-    // instantiate the BedrockRuntimeClient  
+    // instantiate the BedrockRuntimeClient
     client = await createBedrockClient(creds);
     // Once everything is setup, let's get the first affirmation
     await generateClaude3();
-
-  } catch(err) {
+  } catch (err) {
     console.error(err);
     document.querySelector("#affirmation").innerHTML = err;
   }
-  
-  const affirmationButton = document.querySelector("#getNewAffirmation");
-  affirmationButton.addEventListener("click", generateClaude3);
-  const affirmationButton2 = document.querySelector('#getNewAffirmation2');
-  affirmationButton2.addEventListener("click", generateClaudeV2);
+
+  const affirmationButton = document.querySelector("#getNewAffirmationLlama");
+  affirmationButton.addEventListener("click", generateLlama);
+  const affirmationButton2 = document.querySelector(
+    "#getNewAffirmationMistral",
+  );
+  affirmationButton2.addEventListener("click", generateMistral);
 }
 
 let client = null;
-async function createBedrockClient(creds) {  
+async function createBedrockClient(creds) {
   client = await new BedrockRuntimeClient({
     credentials: creds.credentials,
-    region: creds.region
+    region: creds.region,
   });
   return client;
 }
 
 async function fetchCredentials() {
   return {
-    region: "us-west-2",  // Hardcoded as this region is a requirement for the hosted Workshops and must not be changed.
+    region: "us-west-2", // Hardcoded as this region is a requirement for the hosted Workshops and must not be changed.
     credentials: {
       accessKeyId: import.meta.env.VITE_AWS_ACCESS_KEY_ID,
       secretAccessKey: import.meta.env.VITE_AWS_SECRET_ACCESS_KEY,
