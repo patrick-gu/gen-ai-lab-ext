@@ -4,8 +4,10 @@ import {
   ConverseCommand,
 } from "@aws-sdk/client-bedrock-runtime";
 
+// using these models since anthropic requires us to fork over some info and the results are basically the same
 const llama3Id = "meta.llama3-1-8b-instruct-v1:0";
 const mistralId = "mistral.mistral-7b-instruct-v0:2";
+
 const prompt =
   "Give me an affirmation to boost my motivation today, referencing plants, animals, or flowers by adding emoji. Don't show the prompt, only the quote. Do not add anything like Here is an affirmation... just return the affirmation alone";
 const conversation = [
@@ -29,17 +31,32 @@ async function fetchNewAffirmation(modelId) {
   } catch (err) {
     console.error(err);
     document.querySelector("#affirmation").innerHTML = err;
+    throw Error; // propogate error up, I know this is kinda stupid but I'm also way too lazy to do this properly
   }
 
   disableButton(false);
 }
 
 async function generateLlama() {
-  await fetchNewAffirmation(llama3Id);
+  try {
+    await fetchNewAffirmation(llama3Id);
+  } catch (err) {
+    document.querySelector("#affirmation").innerHTML +=
+      "\nRetrying with other model";
+    await new Promise((r) => setTimeout(r, 1000)); // so user has time to read error before falling back to other model
+    await fetchNewAffirmation(mistralId);
+  }
 }
 
 async function generateMistral() {
-  await fetchNewAffirmation(mistralId);
+  try {
+    await fetchNewAffirmation(mistralId);
+  } catch (err) {
+    document.querySelector("#affirmation").innerHTML +=
+      "\nRetrying with other model";
+    await new Promise((r) => setTimeout(r, 1000)); // so user has time to read error before falling back to other model
+    await fetchNewAffirmation(llama3Id);
+  }
 }
 
 // Shows a loading animation while fetching a new affirmation
@@ -82,7 +99,7 @@ async function init() {
 
 let client = null;
 async function createBedrockClient(creds) {
-  client = await new BedrockRuntimeClient({
+  client = new BedrockRuntimeClient({
     credentials: creds.credentials,
     region: creds.region,
   });
