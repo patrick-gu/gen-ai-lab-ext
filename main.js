@@ -2,6 +2,7 @@ import "./style.css";
 import {
   BedrockRuntimeClient,
   ConverseCommand,
+  InvokeModelCommand,
 } from "@aws-sdk/client-bedrock-runtime";
 
 // using these models since anthropic requires us to fork over some info and the results are basically the same
@@ -16,6 +17,28 @@ const conversation = [
     content: [{ text: prompt }],
   },
 ];
+
+const imagePrompt =
+  "Give me motivatonal image featuring plants, animals or flowers";
+function getImageGenInput() {
+  return {
+    contentType: "application/json",
+    accept: "*/*",
+    modelId: "stability.stable-diffusion-xl-v1",
+    body: JSON.stringify({
+      text_prompts: [
+        {
+          text: imagePrompt,
+        },
+      ],
+      cfg_scale: 5,
+      seed: Math.floor(Math.random() * 1025),
+      steps: 50,
+    }),
+  };
+}
+
+const textDecoder = new TextDecoder("utf-8");
 
 async function fetchNewAffirmation(modelId) {
   disableButton(true);
@@ -33,6 +56,26 @@ async function fetchNewAffirmation(modelId) {
     document.querySelector("#affirmation").innerHTML = err;
     disableButton(false);
     throw err; // propogate error up, I know this is kinda stupid but I'm also way too lazy to do this properly
+  }
+  disableButton(false);
+}
+
+async function generateImage() {
+  disableButton(true);
+  showImageLoadingAnimation();
+
+  try {
+    const response = await client.send(
+      new InvokeModelCommand(getImageGenInput()),
+    );
+    const jsonString = textDecoder.decode(response.body.buffer);
+    const parsedData = JSON.parse(jsonString);
+    document.querySelector("#imageContainer").innerHTML =
+      `<img src=\"data:image/png;base64, ${parsedData.artifacts[0].base64}\">`;
+  } catch (err) {
+    document.querySelector("#affirmation").innerHTML = err;
+    document.querySelector("#imageContainer").innerHTML = "";
+    disableButton(false);
   }
 
   disableButton(false);
@@ -66,12 +109,19 @@ function showLoadingAnimation() {
     '<div class="loading-spinner"></div>';
 }
 
+function showImageLoadingAnimation() {
+  document.querySelector("#imageContainer").innerHTML =
+    '<div class="loading-spinner"></div>';
+}
+
 // Disables the button while fetching a new affirmation so we don't request several at once by clicking repeatedly
 function disableButton(isDisabled) {
   const llamaButton = document.querySelector("#getNewAffirmationLlama");
   const mistralButton = document.querySelector("#getNewAffirmationMistral");
+  const imageButton = document.querySelector("#generateImage");
   llamaButton.disabled = isDisabled;
   mistralButton.disabled = isDisabled;
+  imageButton.disabled = isDisabled;
 }
 
 init();
@@ -90,12 +140,12 @@ async function init() {
     document.querySelector("#affirmation").innerHTML = err;
   }
 
-  const affirmationButton = document.querySelector("#getNewAffirmationLlama");
-  affirmationButton.addEventListener("click", generateLlama);
-  const affirmationButton2 = document.querySelector(
-    "#getNewAffirmationMistral",
-  );
-  affirmationButton2.addEventListener("click", generateMistral);
+  const llamaButton = document.querySelector("#getNewAffirmationLlama");
+  llamaButton.addEventListener("click", generateLlama);
+  const mistralButton = document.querySelector("#getNewAffirmationMistral");
+  mistralButton.addEventListener("click", generateMistral);
+  const imageButton = document.querySelector("#generateImage");
+  imageButton.addEventListener("click", generateImage);
 }
 
 let client = null;
