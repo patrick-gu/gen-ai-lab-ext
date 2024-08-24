@@ -9,16 +9,17 @@ import {
 const llama3Id = "meta.llama3-1-8b-instruct-v1:0";
 const mistralId = "mistral.mistral-7b-instruct-v0:2";
 
-let elementsToGenerate = [];
+let selectedChips = [];
 
+// generated prompt when function is called with current chips
 function getLLMInput() {
   const prompt =
     "Give me an affirmation to boost my motivation today" +
-      elementsToGenerate.length ===
+      selectedChips.length ===
     0
       ? "."
       : ", referencing " +
-        elementsToGenerate.join(" and ") +
+        selectedChips.join(" and ") +
         " by adding emoji." +
         " Don't show the prompt, only the quote. Do not add anything like Here is an affirmation... just return the affirmation alone";
   return [
@@ -29,11 +30,12 @@ function getLLMInput() {
   ];
 }
 
+// generated prompt when function is called with current chips
 function getImageGenInput() {
   const imagePrompt =
-    "Give me motivatonal image" + elementsToGenerate.length === 0
+    "Give me motivatonal image" + selectedChips.length === 0
       ? ""
-      : "featuring " + elementsToGenerate.join(" and ");
+      : "featuring " + selectedChips.join(" and ");
   return {
     contentType: "application/json",
     accept: "*/*",
@@ -51,21 +53,20 @@ function getImageGenInput() {
   };
 }
 
+// toggles styling and adds/removes elements from selectedChips
 function toggleChips(id) {
   const chip = document.querySelector("#" + id);
-  if (elementsToGenerate.indexOf(id) == -1) {
+  if (selectedChips.indexOf(id) == -1) {
     chip.classList.remove("deselected");
-    elementsToGenerate.push(id);
-    console.log(elementsToGenerate);
+    selectedChips.push(id);
+    console.log(selectedChips);
     return;
   }
 
   chip.classList.add("deselected");
-  elementsToGenerate = elementsToGenerate.filter((item) => item != id);
-  console.log(elementsToGenerate);
+  selectedChips = selectedChips.filter((item) => item != id);
+  console.log(selectedChips);
 }
-
-const textDecoder = new TextDecoder("utf-8");
 
 async function fetchNewAffirmation(modelId) {
   disableButton(true);
@@ -87,6 +88,9 @@ async function fetchNewAffirmation(modelId) {
   disableButton(false);
 }
 
+const textDecoder = new TextDecoder("utf-8");
+
+// generate image using SDXL
 async function generateImage() {
   disableButton(true);
   showImageLoadingAnimation();
@@ -98,16 +102,17 @@ async function generateImage() {
     const jsonString = textDecoder.decode(response.body.buffer);
     const parsedData = JSON.parse(jsonString);
     document.querySelector("#imageContainer").innerHTML =
-      `<img src=\"data:image/png;base64, ${parsedData.artifacts[0].base64}\">`;
+      `<img src=\"data:image/png;base64, ${parsedData.artifacts[0].base64}\">`; // this part will be different for Titan image gen
   } catch (err) {
-    document.querySelector("#affirmation").innerHTML = err;
-    document.querySelector("#imageContainer").innerHTML = "";
+    document.querySelector("#affirmation").innerHTML = err; // show error in affirmation
+    document.querySelector("#imageContainer").innerHTML = ""; // clear image
     disableButton(false);
   }
 
   disableButton(false);
 }
 
+// generate affirmation with Llama w/ mistral fallback
 async function generateLlama() {
   try {
     await fetchNewAffirmation(llama3Id);
@@ -115,10 +120,11 @@ async function generateLlama() {
     document.querySelector("#affirmation").innerHTML +=
       "\nRetrying with other model";
     await new Promise((r) => setTimeout(r, 1000)); // so user has time to read error before falling back to other model
-    await fetchNewAffirmation(mistralId);
+    await fetchNewAffirmation(mistralId); // fallback model
   }
 }
 
+// generate affirmation with mistral w/ Llama fallback
 async function generateMistral() {
   try {
     await fetchNewAffirmation(mistralId);
@@ -126,7 +132,7 @@ async function generateMistral() {
     document.querySelector("#affirmation").innerHTML +=
       "\nRetrying with other model";
     await new Promise((r) => setTimeout(r, 1000)); // so user has time to read error before falling back to other model
-    await fetchNewAffirmation(llama3Id);
+    await fetchNewAffirmation(llama3Id); // fallback model
   }
 }
 
@@ -136,6 +142,7 @@ function showLoadingAnimation() {
     '<div class="loading-spinner"></div>';
 }
 
+// Shows a loading animation while generateing a new image
 function showImageLoadingAnimation() {
   document.querySelector("#imageContainer").innerHTML =
     '<div class="loading-spinner"></div>';
@@ -167,6 +174,7 @@ async function init() {
     document.querySelector("#affirmation").innerHTML = err;
   }
 
+  // binding buttons to functions
   const llamaButton = document.querySelector("#getNewAffirmationLlama");
   llamaButton.addEventListener("click", generateLlama);
   const mistralButton = document.querySelector("#getNewAffirmationMistral");
@@ -174,17 +182,17 @@ async function init() {
   const imageButton = document.querySelector("#generateImage");
   imageButton.addEventListener("click", generateImage);
 
+  // binding chips to functions
   const flowersChip = document.querySelector("#flowers");
   flowersChip.addEventListener("click", () => toggleChips("flowers"));
-
   const plantsChip = document.querySelector("#plants");
   plantsChip.addEventListener("click", () => toggleChips("plants"));
-
   const animalsChip = document.querySelector("#animals");
   animalsChip.addEventListener("click", () => toggleChips("animals"));
 }
 
 let client = null;
+// Initialize new Bedrock client
 function createBedrockClient(creds) {
   client = new BedrockRuntimeClient({
     credentials: creds.credentials,
@@ -193,6 +201,7 @@ function createBedrockClient(creds) {
   return client;
 }
 
+// get creds from .env file
 async function fetchCredentials() {
   return {
     region: "us-west-2", // Hardcoded as this region is a requirement for the hosted Workshops and must not be changed.
