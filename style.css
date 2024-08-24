@@ -41,6 +41,21 @@ h1 {
     height: auto; /* Allow the height to grow */
 }
 
+.chip {
+    display: inline-block;
+    padding: 0 25px;
+    height: 50px;
+    font-size: 16px;
+    line-height: 50px;
+    border-radius: 25px;
+    background-color: #f1f1f1;
+    margin-bottom: 2rem;
+}
+
+.deselected {
+    opacity: 0.5;
+}
+
 button {
     background-color: #f8991d;
     font-size: 1.75rem;

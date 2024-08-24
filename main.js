@@ -9,18 +9,31 @@ import {
 const llama3Id = "meta.llama3-1-8b-instruct-v1:0";
 const mistralId = "mistral.mistral-7b-instruct-v0:2";
 
-const prompt =
-  "Give me an affirmation to boost my motivation today, referencing plants, animals, or flowers by adding emoji. Don't show the prompt, only the quote. Do not add anything like Here is an affirmation... just return the affirmation alone";
-const conversation = [
-  {
-    role: "user",
-    content: [{ text: prompt }],
-  },
-];
+let elementsToGenerate = [];
 
-const imagePrompt =
-  "Give me motivatonal image featuring plants, animals or flowers";
+function getLLMInput() {
+  const prompt =
+    "Give me an affirmation to boost my motivation today" +
+      elementsToGenerate.length ===
+    0
+      ? "."
+      : ", referencing " +
+        elementsToGenerate.join(" and ") +
+        " by adding emoji." +
+        " Don't show the prompt, only the quote. Do not add anything like Here is an affirmation... just return the affirmation alone";
+  return [
+    {
+      role: "user",
+      content: [{ text: prompt }],
+    },
+  ];
+}
+
 function getImageGenInput() {
+  const imagePrompt =
+    "Give me motivatonal image" + elementsToGenerate.length === 0
+      ? ""
+      : "featuring " + elementsToGenerate.join(" and ");
   return {
     contentType: "application/json",
     accept: "*/*",
@@ -38,6 +51,20 @@ function getImageGenInput() {
   };
 }
 
+function toggleChips(id) {
+  const chip = document.querySelector("#" + id);
+  if (elementsToGenerate.indexOf(id) == -1) {
+    chip.classList.remove("deselected");
+    elementsToGenerate.push(id);
+    console.log(elementsToGenerate);
+    return;
+  }
+
+  chip.classList.add("deselected");
+  elementsToGenerate = elementsToGenerate.filter((item) => item != id);
+  console.log(elementsToGenerate);
+}
+
 const textDecoder = new TextDecoder("utf-8");
 
 async function fetchNewAffirmation(modelId) {
@@ -46,7 +73,7 @@ async function fetchNewAffirmation(modelId) {
 
   try {
     const response = await client.send(
-      new ConverseCommand({ modelId, messages: conversation }),
+      new ConverseCommand({ modelId, messages: getLLMInput() }),
     );
     const affirmation = response.output.message.content[0].text;
     // set the affirmation in HTML
@@ -146,6 +173,15 @@ async function init() {
   mistralButton.addEventListener("click", generateMistral);
   const imageButton = document.querySelector("#generateImage");
   imageButton.addEventListener("click", generateImage);
+
+  const flowersChip = document.querySelector("#flowers");
+  flowersChip.addEventListener("click", () => toggleChips("flowers"));
+
+  const plantsChip = document.querySelector("#plants");
+  plantsChip.addEventListener("click", () => toggleChips("plants"));
+
+  const animalsChip = document.querySelector("#animals");
+  animalsChip.addEventListener("click", () => toggleChips("animals"));
 }
 
 let client = null;
