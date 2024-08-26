@@ -20,12 +20,8 @@ async function fetchNewAffirmation() {
   showLoadingAnimation();
 
   try {
-    const response = await client.send(
-      new ConverseCommand({ modelId, messages: conversation }),
-    );
-    const affirmation = response.output.message.content[0].text;
-    // set the affirmation in HTML
-    document.querySelector("#affirmation").innerHTML = affirmation;
+    // TODO
+    // Generate affirmation and change the contents of affirmation
   } catch (err) {
     console.error(err);
     document.querySelector("#affirmation").innerHTML = err;
@@ -68,10 +64,8 @@ async function init() {
 
 let client = null;
 async function createBedrockClient(creds) {
-  client = await new BedrockRuntimeClient({
-    credentials: creds.credentials,
-    region: creds.region,
-  });
+  // TODO
+  // Initial BedrockClient, assign it to the client variable
   return client;
 }
 
