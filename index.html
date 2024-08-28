@@ -1,26 +1,45 @@
 <html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>My Affirmations</title>
-    </head>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Affirmations</title>
+  </head>
 
-    <body>
-        <main>
-            <h1><span>My Affirmations</span></h1>
-            <div id="imageContainer"></div>
-            <section class="text">
-                <h3 id="affirmation">Loading...</h3>
-            </section>
-            <span>
-                <button id="flowers" class="chip deselected">Flowers</button>
-                <button id="plants" class="chip deselected">Plants</button>
-                <button id="animals" class="chip deselected">Animals</button>
-            </span>
-            <button id="getNewAffirmation" disabled>
-                Generate Affirmation
-            </button>
-        </main>
-        <script type="module" src="/main.js"></script>
-    </body>
+  <body>
+    <main>
+      <h1><span>My Affirmations</span></h1>
+      <section class="text">
+        <h3 id="affirmation">Loading...</h3>
+      </section>
+      <button id="getNewAffirmation" disabled>Another Please</button>
+      <label for="insult">Insult mode</label>
+      <input type="checkbox" name="insult" />
+      <div>
+        <input
+          type="radio"
+          id="claude2"
+          name="model"
+          value="anthropic.claude-v2"
+          checked
+        />
+        <label for="claude2">Claude</label><br />
+        <input
+          type="radio"
+          id="claude3"
+          name="model"
+          value="anthropic.claude-3-haiku-20240307-v1:0"
+        />
+        <label for="claude3">Claude 3 Haiku</label><br />
+      </div>
+      <div>
+        <input type="radio" id="short" name="length" value="short" checked />
+        <label for="short">Short</label><br />
+        <input type="radio" id="medium" name="length" value="medium" />
+        <label for="medium">Medium</label><br />
+        <input type="radio" id="long" name="length" value="long" />
+        <label for="long">Long</label><br />
+      </div>
+    </main>
+    <script type="module" src="/main.js"></script>
+  </body>
 </html>

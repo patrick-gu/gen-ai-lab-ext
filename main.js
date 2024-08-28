@@ -4,24 +4,50 @@ import {
   ConverseCommand,
 } from "@aws-sdk/client-bedrock-runtime";
 
-// const modelId = 'anthropic.claude-3-haiku-20240307-v1:0';
-const modelId = "anthropic.claude-v2";
-const prompt =
+const insultMode = document.querySelector("input[name=insult]");
+
+const badPrompt =
+  "Give me a silly insult to make me laugh today, referencing plants, animals, or flowers by adding emoji. Just put the response directly.";
+const goodPrompt =
   "Give me an affirmation to boost my motivation today, referencing plants, animals, or flowers by adding emoji. Don't show the prompt, only the quote. Do not add anything like Here is an affirmation... just return the affirmation alone";
-const conversation = [
-  {
-    role: "user",
-    content: [{ text: prompt }],
-  },
-];
 
 async function fetchNewAffirmation() {
   disableButton(true);
   showLoadingAnimation();
 
+  const model = document.querySelector("input[name=model]:checked");
+  const length = document.querySelector("input[name=length]:checked");
+
+  let prompt = insultMode.checked ? badPrompt : goodPrompt;
+  console.log(length);
+  switch (length.value) {
+    case "short":
+      prompt += " and make it short, 10-25 words";
+      break;
+    case "medium":
+      prompt += " and make it medium, 25-50 words";
+      break;
+    case "long":
+      prompt += " and make it long, 50-150 words";
+      break;
+  }
+  console.log(prompt);
+
   try {
-    // TODO
-    // Generate affirmation and change the contents of affirmation
+    const response = await client.send(
+      new ConverseCommand({
+        modelId: model.value,
+        messages: [
+          {
+            role: "user",
+            content: [{ text: prompt }],
+          },
+        ],
+      })
+    );
+    const affirmation = response.output.message.content[0].text;
+    // set the affirmation in HTML
+    document.querySelector("#affirmation").innerHTML = affirmation;
   } catch (err) {
     console.error(err);
     document.querySelector("#affirmation").innerHTML = err;
@@ -64,8 +90,10 @@ async function init() {
 
 let client = null;
 async function createBedrockClient(creds) {
-  // TODO
-  // Initial BedrockClient, assign it to the client variable
+  client = await new BedrockRuntimeClient({
+    credentials: creds.credentials,
+    region: creds.region,
+  });
   return client;
 }
 
